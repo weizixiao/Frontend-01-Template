@@ -1,0 +1,14 @@
+<div>
+    <p id="id" class="class">hjk</p>
+</div>
+<script>
+// 借助querySelectorAll实现，Polyfill方案
+function matches (selector, element) {
+    var matches = document.querySelectorAll(selector),
+        i = matches.length;
+    while (--i >= 0 && matches.item(i) !== element) {};
+    return i > -1;
+}
+console.log(matches("div #id.class", document.getElementById("id")));
+</script>
+
