@@ -12,19 +12,26 @@
     <script>
         var a = document.getElementById("a");
         var b = document.getElementById("b");
+        // 第三个参数，加上true就是捕获，不加就是冒泡
         a.addEventListener("click", (e) => {
             console.log("a");
+            console.log(e);
+            // 阻止捕获，这样b就不执行了
+            // e.stopPropagation();
         }, true)
 
         b.addEventListener("click", (e) => {
             console.log("b");
+            e.stopPropagation();
         }, true)
+        // 第三个参数为false，就是冒泡
         a.addEventListener("click", (e) => {
             console.log("a1");
         }, false)
 
         b.addEventListener("click", (e) => {
             console.log("b1");
+            // e.stopPropagation();
         }, false)
     </script>
 </body>

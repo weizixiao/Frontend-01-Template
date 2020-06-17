@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    #box {
+        display: flex;
+        flex-direction: column;
+    }
+    .line-box {
+        display: flex;
+    }
+    .item {
+        width: 100px;
+        height: 100px;
+        background: green;
+        margin: 4px;
+        line-height: 100px;
+        text-align: center;
+        font-size: 48px;
+    }
+</style>
+<body>
+    <div id="box"></div>
+</body>
+<script>
+    const data = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ];
+
+    let color = 1;
+
+    const element = document.getElementById("box");
+    // element.addEventListener("click", e => {
+    //     console.log(e);
+    // })
+
+    function move (x, y) {
+        data[y][x] = color;
+        if (check(data, color)) alert((color === 2 ? "❌" : "⭕️") + "win");
+        color = 3 - color;
+        show(data);
+        if (willWin(data, color)) {
+            console.log(color === 2 ? "❌" : "⭕️");
+        }
+    }
+
+    // function computedMove() {
+    //     let choice = bestChoice
+    // }
+
+    function show (data) {
+        element.innerHTML = "";
+        data.forEach((item, index) => {
+            const ele = document.createElement("div");
+            // 加样式
+            // ele.classList.add();
+            ele.className = "line-box";
+            item.forEach((el, elIndex) => {
+                const child = document.createElement("div");
+                child.className = "item";
+                child.innerHTML = el === 1 ? "⭕️" : (el === 2 ? "❌" : "");
+                child.addEventListener("click", () => {
+                    move(elIndex, index);
+                })
+                ele.appendChild(child);
+            });
+            element.appendChild(ele);
+        });
+    }
+
+    function check(data, color) {
+        for (let i = 0; i < 3; i++) {
+            let win = true;
+            for (let j = 0; j < 3; j++) {
+                if (data[i][j] !== color) {
+                    win = false;
+                    break;
+                }
+            }
+            if (win) return true;
+        }
+
+        for (let i = 0; i < 3; i++) {
+            let win = true;
+            for (let j = 0; j < 3; j++) {
+                if (data[j][i] !== color) {
+                    win = false;
+                    break;
+                }
+            }
+            if (win) return true;
+        }
+
+        {
+            let win = true;
+            for (let j = 0; j < 3; j++) {
+                if (data[j][j] !== color) {
+                    win = false;
+                    break;
+                }
+            }
+            if (win) return true;
+        }
+
+        {
+            let win = true;
+            for (let j = 0; j < 3; j++) {
+                if (data[j][2 - j] !== color) {
+                    win = false;
+                    break;
+                }
+            }
+            if (win) return true;
+        }
+    }
+
+    function clone (data) {
+        return JSON.parse(JSON.stringify(data));
+    }
+
+    function willWin(data, color) {
+        for (let i = 0; i < 3; i++) {
+            let win = true;
+            for (let j = 0; j < 3; j++) {
+                if (data[i][j] !== 0) {
+                    continue;
+                }
+                let tmp = clone(data);
+                tmp[i][j] = color;
+                if (check(tmp, color)) {
+                    // return true;
+                    return [j, i];
+                }
+            }
+        }
+        return null;
+    }
+
+    function bestChoice (data, color) {
+        let point = willWin(data, color);
+        if (point) {
+            return {
+                point,
+                result: 1
+            }
+        }
+
+        let result = -1;
+
+        outer:for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (data[i][j] !== 0) {
+                    continue;
+                }
+                let tmp = clone(data);
+                tmp[i][j] = color;
+                let opp = bastChoice(tmp, 3 - color);
+                if (-opp.result >= result) {
+                    point = [j ,i];
+                    result = -opp.result;
+                }
+                if (result == 1)
+                    break outer;
+            }
+        }
+        return {
+            point,
+            result: point ? result : 0
+        }
+    }
+
+    show(data);
+</script>
+</html>
