@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        div {
+            width: 100px;
+            height: 100px;
+            border-radius: 100%;
+            background: #ccc;
+        }
+        /* .red {
+            background: red;
+        }
+        .green {
+            background: green;
+        }
+        .yellow {
+            background: yellow;
+        } */
+    </style>
+</head>
+<body>
+    <div class="red"></div>
+    <div class="green"></div>
+    <div class="yellow"></div>
+</body>
+<script>
+    const red = document.querySelector(".red");
+    const green = document.querySelector(".green");
+    const yellow = document.querySelector(".yellow");
+    let time = 1;
+    let timer = null;
+    function uptime () {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            // console.log(time);
+            green.style.background = time <= 10 ? "green" : "#ccc";
+            yellow.style.background = time > 10 && time <= 12 ? "yellow" : "#ccc";
+            red.style.background = time > 12 && time <= 17 ? "red" : "#ccc";
+            time++;
+            if (time >= 17) time = 1;
+            uptime();
+        }, 1000);
+    }
+    uptime();
+</script>
+</html>
