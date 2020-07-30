@@ -1,4 +1,4 @@
-
+import enableGesture from "./gesture.js";
 export function create (Cls, attributes, ...children) {
     let o;
     if (typeof Cls === 'string') {
@@ -27,7 +27,7 @@ export function create (Cls, attributes, ...children) {
     }
      
     visit(children)
-    return o
+    return o;
 }
 
 export class Wrapper {
@@ -37,6 +37,13 @@ export class Wrapper {
     }
     setAttribute (name, value) {
         this.root.setAttribute(name, value);
+        if (name === "enableGesture") {
+            enableGesture(this.root);
+        }
+        if (name.match(/^on([\s\S]+)$/)) {
+            let eventName = RegExp.$1.replace(/^[\s\S]/, c => c.toLocaleLowerCase());
+            this.addEventListener(eventName, value);
+        }
     }
     appendChild (child) {
         this.children.push(child);

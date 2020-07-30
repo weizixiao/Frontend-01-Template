@@ -1,10 +1,13 @@
 import { Wrapper, Text, create } from './createElement';
+import { Timeline, Animation } from "./animation.js"
+import { ease } from "./cubicBezier.js";
 
 class Carousel {
     constructor () {
         this.position = 0;
         this.children = [];
         this.root = null;
+        this.timeline = new Timeline();
     }
     setAttribute (name, value) {
         this[name] = value;
@@ -20,66 +23,99 @@ class Carousel {
         this.autoplay && this.loop();
     }
     loop () {
+        this.nextPicStopHandler = null;
         let run = () => {
             this.next();
-            setTimeout(run, this.duration);
+            this.nextPicStopHandler = setTimeout(run, this.duration);
         }
-        setTimeout(run, this.duration);
+
+        this.nextPicStopHandler = setTimeout(run, this.duration);
     }
 
-    next (fromDrag) {
+    next () {
         let nextPosition = (this.position + 1) % this.data.length;
         let current = this.root.children[this.position];
         let next = this.root.children[nextPosition];
 
-        if (fromDrag) {
-            current.style.transition = 'ease 0.5s';
-            next.style.transition = 'ease 0.5s';
+        let currentAnimation = new Animation(current.style, "transform", v => `translateX(${5 * v}px)`, -100 * this.position,
+            -100 - 100 * this.position, 500, 0, ease);
+        let nextAnimation = new Animation(next.style, "transform", v => `translateX(${5 * v}px)`, 100 - 100 * nextPosition,
+            -100 * nextPosition, 500, 0, ease);
+        
+        this.timeline.add(currentAnimation);
+        this.timeline.add(nextAnimation);
 
-            current.style.transform = `translateX(${-100 - 100 * this.position}%)`;
-            next.style.transform = `translateX(${-100 * nextPosition}%)`;
-
-            this.position = nextPosition;
-            return;
-        }
-
-        current.style.transition = 'ease 0s';
-        next.style.transition = 'ease 0s';
-
-        current.style.transform = `translateX(${ -100 * this.position}%)`;
-        next.style.transform = `translateX(${100 - 100 * nextPosition}%)`;
-
-        setTimeout(() => {
-            current.style.transition = 'ease 0.5s';
-            next.style.transition = 'ease 0.5s';
-
-            current.style.transform = `translateX(${-100 - 100 * this.position}%)`;
-            next.style.transform = `translateX(${-100 * nextPosition}%)`;
-
-            this.position = nextPosition;
-        })
+        this.position = nextPosition;
     }
-    // 上一张只可能是通过拖拽
-    prev () {
-        let prevPosition = (this.position - 1 + this.data.length) % this.data.length;
-        let current = this.root.children[this.position];
-        let prev = this.root.children[prevPosition];
 
-        current.style.transition = 'ease 0.5s';
-        prev.style.transition = 'ease 0.5s';
-
-        current.style.transform = `translateX(${100 - 100 * this.position}%)`;
-        prev.style.transform = `translateX(${ -100 * prevPosition}%)`;
-
-        this.position = prevPosition;
-    }
     render (){
+        this.timeline.start();
+        let children = this.data.map((url, currentPosition) => {
+            let lastPosition = (currentPosition - 1 + this.data.length) % this.data.length;
+            let nextPosition = (currentPosition + 1) % this.data.length;
+
+            let offset = 0;
+            let onStart = () => {
+                this.timeline.pause();
+                clearTimeout(this.nextPicStopHandler);
+
+                let currentElement = children[currentPosition].root;
+                let currentTransformValue = Number(currentElement.style.transform.match(/^translateX\(([\s\S]+)px\)/)[1]);
+                offset = currentTransformValue + 500 * currentPosition;
+            }
+            let onPan = event => {
+                let lastElement = children[lastPosition].root;
+                let currentElement = children[currentPosition].root;
+                let nextElement = children[nextPosition].root;
+
+                let currentTransformValue = -500 * currentPosition + offset;
+                let lastTransformValue = -500 -500 * lastPosition + offset;
+                let nextTransformValue = 500 -500 * nextPosition + offset;
+
+                let dx = event.clientX - event.startX;
+                lastElement.style.transform = `translateX(${lastTransformValue + dx}px)`;
+                currentElement.style.transform = `translateX(${currentTransformValue + dx}px)`;
+                nextElement.style.transform = `translateX(${nextTransformValue + dx}px)`;
+                // console.log("currentTransformValue", currentTransformValue);
+            }
+
+            let onPanend = (event) => {
+                let lastElement = children[lastPosition].root;
+                let currentElement = children[currentPosition].root;
+                let nextElement = children[nextPosition].root;
+                let direction = 0;
+                let dx = event.clientX - event.startX;
+                if (dx + offset > 250) {
+                    direction = 1;
+                } else if (dx + offset < -250) {
+                    direction = -1;
+                }
+                this.timeline.restart();
+
+                let lastAnimation = new Animation(lastElement.style, "transform", v => `translateX(${v}px)`,
+                    -500 - 500 * lastPosition + offset + dx,
+                    -500 - 500 * lastPosition + direction * 500, 500, 0, ease);
+                let currentAnimation = new Animation(currentElement.style, "transform", v => `translateX(${v}px)`, 
+                    -500 * currentPosition + offset + dx,
+                    - 500 * currentPosition + direction * 500, 500, 0, ease);
+                let nextAnimation = new Animation(nextElement.style, "transform", v => `translateX(${v}px)`, 
+                    500 - 500 * nextPosition + offset + dx,
+                    500 -500 * nextPosition + direction * 500, 500, 0, ease);
+                this.timeline.add(lastAnimation);
+                this.timeline.add(currentAnimation);
+                this.timeline.add(nextAnimation);
+
+                this.position = (this.position - direction + this.data.length) % this.data.length;
+
+                this.loop();
+            }
+            const item = <img src={url} onStart={onStart} onPan={onPan} onPanend={onPanend} enableGesture={true} alt='carouselItem' class='carousel-item' />;
+            item.root.style.transform = `translateX(0px)`;
+            item.addEventListener('dragstart', e => e.preventDefault());
+            return item;
+        });
         return <div class='carousel'>
-            {this.data.map(url => {
-                const item = <img src={url} alt='carouselItem' class='carousel-item' />;
-                item.addEventListener('dragstart', e => e.preventDefault());
-                return item;
-            })}
+            {children}
         </div>;
     }
 }
