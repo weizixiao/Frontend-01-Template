@@ -1,6 +1,9 @@
 import { Wrapper, Text, create } from './createElement';
 import { Timeline, Animation } from "./animation.js"
 import { ease } from "./cubicBezier.js";
+// import { Panel } from "./panel.js";
+import { Panel } from "./tabPanel.js";
+
 
 class Carousel {
     constructor () {
@@ -85,9 +88,12 @@ class Carousel {
                 let nextElement = children[nextPosition].root;
                 let direction = 0;
                 let dx = event.clientX - event.startX;
-                if (dx + offset > 250) {
+
+                console.log(event);
+
+                if (dx + offset > 250 || (dx > 0 && event.flick)) {
                     direction = 1;
-                } else if (dx + offset < -250) {
+                } else if (dx + offset < -250 || (dx < 0 && event.flick)) {
                     direction = -1;
                 }
                 this.timeline.restart();
@@ -128,4 +134,10 @@ let data = [
 ];
 let component = <Carousel data={data} duration={2000} autoplay>
                 </Carousel>;
-component.mountTo(document.body);
+
+let panel = <Panel title="this is title">
+    <span>ssss</span>
+    <span>lll</span>
+</Panel>
+
+panel.mountTo(document.body);
