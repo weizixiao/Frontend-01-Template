@@ -135,9 +135,9 @@ let data = [
 let component = <Carousel data={data} duration={2000} autoplay>
                 </Carousel>;
 
-let panel = <Panel title="this is title">
-    <span>ssss</span>
-    <span>lll</span>
-</Panel>
+// let panel = <Panel title="this is title">
+//     <span>ssss</span>
+//     <span>lll</span>
+// </Panel>
 
-panel.mountTo(document.body);
+component.mountTo(document.body);
